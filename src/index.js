@@ -21,12 +21,12 @@ function checksExistsUserAccount(request, response, next) {
   const usernameExists = users.some((user) => user.username === username);
 
   if (!usernameExists) {
-    return response.send(400, {
+    return response.status(400).send({
       success: false,
       message: "User doesn't exist",
     });
   }
-
+  request.body.username = username;
   next();
 }
 
@@ -35,7 +35,7 @@ app.post("/users", (request, response) => {
   const usernameExists = users.some((user) => (user.username = username));
 
   if (!name || !username || usernameExists) {
-    return response.send(400, {
+    return response.status(400).send({
       success: false,
       message: usernameExists
         ? "Username already exists. Choose another one."
@@ -50,19 +50,44 @@ app.post("/users", (request, response) => {
     todos: [],
   });
 
-  return response.send(200, {
+  return response.status(200).send({
     success: true,
     users,
   });
 });
 
 app.get("/todos", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
-  console.log("🚀 ~ app.post ~ request", request.userId);
+  const { username } = request.body;
+  const { todos } = users.find((user) => user.username === username);
+
+  return response.status(200).send({
+    success: true,
+    todos,
+  });
 });
 
 app.post("/todos", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { username, title, deadline } = request.body;
+  const user = users.find((user) => user.username === username);
+  const otherUsers = users.filter((user) => user.username !== username);
+
+  const newTodo = {
+    id: uuidv4(),
+    title,
+    deadline,
+    done: false,
+    created_at: new Date().getTime(),
+  };
+  const updatedUserTodos = {
+    ...user,
+    todos: [...user.todos, newTodo],
+  };
+  users = otherUsers.concat(updatedUserTodos);
+
+  return response.status(200).send({
+    success: true,
+    todo: newTodo,
+  });
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
