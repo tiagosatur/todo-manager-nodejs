@@ -104,8 +104,10 @@ app.post("/todos", checksExistsUserAccount, (request, response) => {
 });
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
-  const { id } = request.params;
-  const { title, deadline, username } = request.body;
+  const {
+    body: { title, deadline, username },
+    params: { id },
+  } = request;
 
   if (!id || !title || !deadline) {
     return response.status(400).send({
@@ -133,8 +135,10 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
-  const { id } = request.params;
-  const { username } = request.body;
+  const {
+    body: { username },
+    params: { id },
+  } = request;
 
   if (!id) {
     return response.status(400).send({
@@ -159,7 +163,33 @@ app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const {
+    body: { username },
+    params: { id },
+  } = request;
+
+  if (!id) {
+    return response.status(400).send({
+      message: "todo id is required",
+    });
+  }
+
+  const deleteTodoFromUser = users.map((user, i) => {
+    const findUser = user.username === username;
+    if (findUser) {
+      users[i] = {
+        ...user,
+        todos: user.todos.filter((todo) => todo.id !== id),
+      };
+    }
+    return user;
+  });
+
+  users = deleteTodoFromUser;
+
+  return response.status(200).send({
+    message: "Todo deleted succefully!",
+  });
 });
 
 module.exports = app;
