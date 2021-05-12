@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { v4: uuidv4 } = require("uuid");
+const updateTodoFields = require("./utils/updateTodoFields");
+const getTodoByIdAndUsername = require("./utils/getTodoByIdAndUsername");
 
 const app = express();
 
@@ -112,33 +114,17 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
     });
   }
 
-  users = users.map((user, i) => {
-    const userExists = user.username === username;
-
-    if (userExists) {
-      users[i] = {
-        ...user,
-        todos: user.todos.map((todo, j) => {
-          const todoExists = todo.id === id;
-
-          if (todoExists) {
-            user.todos[j] = {
-              ...todo,
-              title,
-              deadline,
-            };
-          }
-
-          return todo;
-        }),
-      };
-    }
-
-    return user;
+  users = updateTodoFields({
+    id,
+    username,
+    fields: {
+      title,
+      deadline,
+    },
+    users,
   });
 
-  const getUser = users.find((user) => user.username === username);
-  const updatedTodo = getUser?.todos.find((todo) => todo.id === id);
+  const updatedTodo = getTodoByIdAndUsername({ id, username, users });
 
   return response.status(200).send({
     success: true,
@@ -156,35 +142,16 @@ app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
     });
   }
 
-  users = users.map((user, i) => {
-    const userExists = user.username === username;
-
-    if (userExists) {
-      users[i] = {
-        ...user,
-        todos: user.todos.map((todo, j) => {
-          const todoExists = todo.id === id;
-
-          if (todoExists) {
-            const doneTodo = {
-              ...todo,
-              done: true,
-            };
-
-            user.todos[j] = doneTodo;
-          }
-
-          return todo;
-        }),
-      };
-    }
-
-    return user;
+  users = updateTodoFields({
+    id,
+    username,
+    fields: {
+      done: true,
+    },
+    users,
   });
 
-  const getUser = users.find((user) => user.username === username);
-  const doneTodo = getUser?.todos.find((todo) => todo.id === id);
-  console.log("🚀 ~ app.patch ~ doneTodo", doneTodo);
+  const doneTodo = getTodoByIdAndUsername({ id, username, users });
 
   return response.status(200).send({
     ...doneTodo,
