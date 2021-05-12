@@ -73,7 +73,7 @@ app.get("/todos", checksExistsUserAccount, (request, response) => {
   const { todos } = users.find((user) => user.username === username);
 
   return response.status(200).send({
-    todos,
+    ...todos,
   });
 });
 
@@ -147,7 +147,48 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 });
 
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  const { id } = request.params;
+  const { username } = request.body;
+
+  if (!id) {
+    return response.status(400).send({
+      message: "id is a required route param",
+    });
+  }
+
+  users = users.map((user, i) => {
+    const userExists = user.username === username;
+
+    if (userExists) {
+      users[i] = {
+        ...user,
+        todos: user.todos.map((todo, j) => {
+          const todoExists = todo.id === id;
+
+          if (todoExists) {
+            const doneTodo = {
+              ...todo,
+              done: true,
+            };
+
+            user.todos[j] = doneTodo;
+          }
+
+          return todo;
+        }),
+      };
+    }
+
+    return user;
+  });
+
+  const getUser = users.find((user) => user.username === username);
+  const doneTodo = getUser?.todos.find((todo) => todo.id === id);
+  console.log("🚀 ~ app.patch ~ doneTodo", doneTodo);
+
+  return response.status(200).send({
+    ...doneTodo,
+  });
 });
 
 app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
