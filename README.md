@@ -53,7 +53,7 @@ Base url: `http://localhost:3333`
 | Method | Route             | Headers  | Body                                                                        | Parameters | Return                                        |
 | ------ | ----------------- | -------- | --------------------------------------------------------------------------- | ---------- | --------------------------------------------- |
 | GET    | `/users`          | -        |                                                                             | -          | Array with users                              |
-| POST   | `/users`          | -        | <pre lang="json">{ "name": "Joseph Satur", username: "joseph" }</pre>       | -          | Object: id, name, username, todos[]           |
+| POST   | `/users`          | -        | <pre lang="json">{ "name": "Joseph Satur", "username": "joseph" }</pre>     | -          | Object: id, name, username, todos[]           |
 | GET    | `/todos`          | username | -                                                                           | -          | Array of todos                                |
 | POST   | `/todos`          | username | <pre lang="json">{ "title": "Go shopping", "deadline": "2021-06-15" }</pre> | -          | Object: id, title, deadline, done, created_at |
 | PUT    | `/todos`          | username | <pre lang="json">{ "title": "Sell Golf", "deadline": 2021-05-23 }</pre>     | -          | Object: id, title, deadline, done, created_at |
