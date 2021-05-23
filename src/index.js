@@ -12,7 +12,7 @@ app.use(express.json());
 let users = [
   {
     id: uuidv4(),
-    name: "Will Vieira",
+    name: "Will Victorios",
     username: "will",
     todos: [
       {
@@ -24,18 +24,73 @@ let users = [
       },
     ],
   },
+  {
+    id: uuidv4(),
+    name: "Joseph Torino",
+    username: "joseph",
+    todos: [
+      {
+        id: uuidv4(),
+        title: "Skydiving",
+        deadline: new Date().getTime(),
+        done: false,
+        created_at: new Date().getTime(),
+      },
+    ],
+  },
 ];
 
-function checksExistsUserAccount(request, response, next) {
+function checkUserExists(request, response, next) {
   const { username } = request.headers;
-  const usernameExists = users.some((user) => user.username === username);
+  const userExists = users.some((user) => user.username === username);
 
-  if (!usernameExists) {
+  if (!userExists) {
     return response.status(400).send({
-      success: false,
-      message: "User doesn't exist",
+      error: "User doesn't exist",
     });
   }
+  request.body.username = username;
+  next();
+}
+
+function checkUserAndTodoExist(request, response, next) {
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const userExists = users.some((user) => user.username === username);
+
+  if (!userExists) {
+    return response.status(400).send({
+      error: "User doesn't exist",
+    });
+  }
+
+  if (!id) {
+    return response.status(400).send({
+      error: "Todo id is required",
+    });
+  }
+
+  const todoExists = users.some((user) => {
+    let exists = false;
+
+    if (user.username === username) {
+      user.todos.some((todo) => {
+        if (todo.id === id) {
+          exists = true;
+        }
+      });
+    }
+
+    return exists;
+  });
+
+  if (!todoExists) {
+    return response.status(400).send({
+      error: "Todo doesn't exist",
+    });
+  }
+
   request.body.username = username;
   next();
 }
@@ -57,20 +112,19 @@ app.post("/users", (request, response) => {
     });
   }
 
-  users = users.concat({
+  const newUser = {
     id: uuidv4(),
     name,
     username,
     todos: [],
-  });
+  };
 
-  return response.status(200).send({
-    success: true,
-    users,
-  });
+  users = users.concat(newUser);
+
+  return response.status(200).send(newUser);
 });
 
-app.get("/todos", checksExistsUserAccount, (request, response) => {
+app.get("/todos", checkUserExists, (request, response) => {
   const { username } = request.body;
   const { todos } = users.find((user) => user.username === username);
 
@@ -79,7 +133,7 @@ app.get("/todos", checksExistsUserAccount, (request, response) => {
   });
 });
 
-app.post("/todos", checksExistsUserAccount, (request, response) => {
+app.post("/todos", checkUserExists, (request, response) => {
   const { username, title, deadline } = request.body;
   const user = users.find((user) => user.username === username);
   const otherUsers = users.filter((user) => user.username !== username);
@@ -97,13 +151,10 @@ app.post("/todos", checksExistsUserAccount, (request, response) => {
   };
   users = otherUsers.concat(updatedUserTodos);
 
-  return response.status(200).send({
-    success: true,
-    todo: newTodo,
-  });
+  return response.status(200).json(newTodo);
 });
 
-app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
+app.put("/todos/:id", checkUserAndTodoExist, (request, response) => {
   const {
     body: { title, deadline, username },
     params: { id },
@@ -128,23 +179,14 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 
   const updatedTodo = getTodoByIdAndUsername({ id, username, users });
 
-  return response.status(200).send({
-    success: true,
-    todo: updatedTodo,
-  });
+  return response.status(200).send(updatedTodo);
 });
 
-app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
+app.patch("/todos/:id/done", checkUserAndTodoExist, (request, response) => {
   const {
     body: { username },
     params: { id },
   } = request;
-
-  if (!id) {
-    return response.status(400).send({
-      message: "id is a required route param",
-    });
-  }
 
   users = updateTodoFields({
     id,
@@ -157,22 +199,14 @@ app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
 
   const doneTodo = getTodoByIdAndUsername({ id, username, users });
 
-  return response.status(200).send({
-    ...doneTodo,
-  });
+  return response.status(200).send(doneTodo);
 });
 
-app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
+app.delete("/todos/:id", checkUserAndTodoExist, (request, response) => {
   const {
     body: { username },
     params: { id },
   } = request;
-
-  if (!id) {
-    return response.status(400).send({
-      message: "todo id is required",
-    });
-  }
 
   const deleteTodoFromUser = users.map((user, i) => {
     const findUser = user.username === username;
@@ -187,9 +221,7 @@ app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
 
   users = deleteTodoFromUser;
 
-  return response.status(200).send({
-    message: "Todo deleted succefully!",
-  });
+  return response.status(200).send();
 });
 
 module.exports = app;
