@@ -45,7 +45,7 @@ function checkUserExists(request, response, next) {
   const userExists = users.some((user) => user.username === username);
 
   if (!userExists) {
-    return response.status(400).send({
+    return response.status(404).send({
       error: "User doesn't exist",
     });
   }
@@ -60,7 +60,7 @@ function checkUserAndTodoExist(request, response, next) {
   const userExists = users.some((user) => user.username === username);
 
   if (!userExists) {
-    return response.status(400).send({
+    return response.status(404).send({
       error: "User doesn't exist",
     });
   }
@@ -86,7 +86,7 @@ function checkUserAndTodoExist(request, response, next) {
   });
 
   if (!todoExists) {
-    return response.status(400).send({
+    return response.status(404).send({
       error: "Todo doesn't exist",
     });
   }
@@ -105,8 +105,7 @@ app.post("/users", (request, response) => {
 
   if (!name || !username || usernameExists) {
     return response.status(400).send({
-      success: false,
-      message: usernameExists
+      error: usernameExists
         ? "Username already exists. Choose another one."
         : "You need to pass name and username",
     });
@@ -126,11 +125,9 @@ app.post("/users", (request, response) => {
 
 app.get("/todos", checkUserExists, (request, response) => {
   const { username } = request.body;
-  const { todos } = users.find((user) => user.username === username);
+  const user = users.find((user) => user.username === username);
 
-  return response.status(200).send({
-    ...todos,
-  });
+  return response.status(200).send(user.todos);
 });
 
 app.post("/todos", checkUserExists, (request, response) => {
@@ -143,7 +140,7 @@ app.post("/todos", checkUserExists, (request, response) => {
     title,
     deadline,
     done: false,
-    created_at: new Date().getTime(),
+    created_at: new Date(),
   };
   const updatedUserTodos = {
     ...user,
@@ -151,7 +148,7 @@ app.post("/todos", checkUserExists, (request, response) => {
   };
   users = otherUsers.concat(updatedUserTodos);
 
-  return response.status(200).json(newTodo);
+  return response.status(201).json(newTodo);
 });
 
 app.put("/todos/:id", checkUserAndTodoExist, (request, response) => {
@@ -208,7 +205,7 @@ app.delete("/todos/:id", checkUserAndTodoExist, (request, response) => {
     params: { id },
   } = request;
 
-  const deleteTodoFromUser = users.map((user, i) => {
+  users.map((user, i) => {
     const findUser = user.username === username;
     if (findUser) {
       users[i] = {
@@ -219,9 +216,7 @@ app.delete("/todos/:id", checkUserAndTodoExist, (request, response) => {
     return user;
   });
 
-  users = deleteTodoFromUser;
-
-  return response.status(200).send();
+  return response.status(204).send(users);
 });
 
 module.exports = app;

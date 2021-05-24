@@ -2,8 +2,6 @@
 
 This is a rest api todo manager where you can add and get users; and you can get, update and delete a todo passing the username in the headers and the todo id as a route param.
 
-It follows a more functional approach. As you can see I try not modify the variables, instead I create new instances of them using methods like concat, filter and map.
-
 ## Run :running:
 
 `yarn install`
@@ -28,6 +26,8 @@ It follows a more functional approach. As you can see I try not modify the varia
 - JSON
 
 ## Requirements :heavy_check_mark:
+
+[Notion requirements](https://www.notion.so/Desafio-01-Conceitos-do-Node-js-59ccb235aecd43a6a06bf09a24e7ede8)
 
 - [x] It must be possible to create an user account
 - [x] It must be possible to get users
